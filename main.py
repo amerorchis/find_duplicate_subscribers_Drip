@@ -1,12 +1,12 @@
 #!/usr/bin/env python3.10
 
 from find_dupes import check_equivalence
-from sep_by_letter import separate_by_letter
+from separate_by_letter import separate_by_letter
 from save_excel import save_excel
 from datetime import datetime
 from send_email import email_spreadsheet
 from drip import retrieve_emails
-from sep_by_letter import separate_by_letter
+from separate_by_letter import separate_by_letter
 from multiprocess import multiprocess_checks
 
 if __name__ == '__main__':
