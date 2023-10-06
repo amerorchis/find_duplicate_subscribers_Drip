@@ -8,6 +8,7 @@ from send_email import email_spreadsheet
 from drip import retrieve_emails
 from separate_by_letter import separate_by_letter
 from multiprocess import multiprocess_checks
+import os
 
 if __name__ == '__main__':
     # Get email list
@@ -22,4 +23,6 @@ if __name__ == '__main__':
     # print(results)
     spreadsheet_name = f'files/duplicate_emails_{datetime.now().strftime("%-m_%-d_%y")}.xlsx'
     save_excel(results, spreadsheet_name)
-    email_spreadsheet(spreadsheet_name)
+    recips = os.environ.get('RECIPS').split(', ')
+    for i in recips:
+        email_spreadsheet(spreadsheet_name, i)

@@ -6,10 +6,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
 
-def email_spreadsheet(spreadsheet):
+def email_spreadsheet(spreadsheet, to_email):
     from_address = os.environ.get('FROM_ALERT_EMAIL')
     from_password = os.environ.get('FROM_ALERT_PWD')
-    to_email = os.environ.get('RECIPS')
 
     # instance of MIMEMultipart
     msg = MIMEMultipart()
