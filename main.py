@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3.10
-
 from find_dupes import find_duplicates
 from save_excel import save_excel
 from datetime import datetime
