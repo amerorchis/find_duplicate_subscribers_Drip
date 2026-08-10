@@ -1,31 +1,43 @@
+"""Normalize email addresses and find subscribers that share the same real inbox."""
+
 import re
 from collections import defaultdict
-from itertools import combinations
+
+# Only Gmail treats dots in the local part as insignificant.
+DOT_INSENSITIVE_DOMAINS = {'gmail.com', 'googlemail.com'}
+
+EMAIL_PATTERN = re.compile(r'^([^@]+)@([^@]+)$')
 
 
 def normalize_email(email):
-    email_pattern = r'^([^@]+)@([^@]+)$'
-    match = re.match(email_pattern, email)
+    """Return the canonical form of an email address, or None if unparseable."""
+    match = EMAIL_PATTERN.match(email.strip().lower())
     if not match:
-        raise ValueError(f"Invalid email format: {email}")
+        return None
     username, domain = match.groups()
 
-    if domain not in ['outlook.com', 'hotmail.com', 'yahoo.com']:
+    username = username.split('+', 1)[0]
+
+    if domain in DOT_INSENSITIVE_DOMAINS:
         username = username.replace('.', '')
 
-    username = re.sub(r'\+.*', '', username)
-
-    return username + '@' + domain
+    return f'{username}@{domain}'
 
 
 def find_duplicates(emails):
+    """Group emails by canonical form and return [(normalized, [variants]), ...]."""
     groups = defaultdict(list)
+    skipped = 0
     for email in emails:
-        groups[normalize_email(email)].append(email)
+        normalized = normalize_email(email)
+        if normalized is None:
+            print(f'Skipping unparseable email: {email!r}')
+            skipped += 1
+            continue
+        groups[normalized].append(email)
 
-    duplicates = []
-    for group in groups.values():
-        if len(group) > 1:
-            duplicates.extend(combinations(group, 2))
+    if skipped:
+        print(f'Skipped {skipped} unparseable email(s)')
 
-    return duplicates
+    return [(normalized, variants) for normalized, variants in sorted(groups.items())
+            if len(variants) > 1]

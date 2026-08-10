@@ -10,7 +10,7 @@ Finds duplicate email subscribers in a Drip email marketing account. Emails that
 
 ```bash
 # Full pipeline: fetch subscribers, find dupes, save spreadsheet, email report
-python main.py
+uv run main.py
 ```
 
 ## Required Environment Variables
@@ -24,14 +24,18 @@ python main.py
 ## Architecture
 
 Pipeline flow (`main.py`):
-1. **drip.py** — `DripEmailUtil` fetches all subscriber emails from the Drip API using threaded pagination
-2. **separate_by_letter.py** — Groups emails by first character (bucketing for parallel comparison)
-3. **multiprocess.py** — Runs duplicate checks across letter buckets using `multiprocessing.Pool`
-4. **find_dupes.py** — `are_emails_equivalent()` normalizes emails (strips dots for non-Outlook/Hotmail/Yahoo, strips `+` aliases) and compares; `check_equivalence()` does O(n²) pairwise comparison within a bucket
-5. **save_excel.py** — Writes duplicate pairs to an Excel file via pandas
-6. **send_email.py** — Emails the spreadsheet as an attachment via Gmail SMTP
+1. **drip.py** — `DripEmailUtil` fetches all subscriber emails from the Drip API using a bounded thread pool (`ThreadPoolExecutor`) over paginated requests
+2. **find_dupes.py** — `normalize_email()` lowercases, strips `+` aliases, and strips dots for Gmail domains only (where dots are insignificant); `find_duplicates()` groups emails by normalized form in O(n) and returns `(normalized, [variants])` groups, skipping unparseable addresses
+3. **save_excel.py** — Writes one row per duplicate group to an Excel file via pandas
+4. **send_email.py** — Emails the spreadsheet to each recipient over a single Gmail SMTP session
 
-Output spreadsheets are saved to `files/` with date-stamped names.
+`main.py` validates all required environment variables up front and creates `files/` if missing. Output spreadsheets are saved to `files/` with date-stamped names.
+
+## Testing
+
+```bash
+uv run pytest
+```
 
 ## Dependencies
 

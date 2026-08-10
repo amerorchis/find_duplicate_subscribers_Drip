@@ -1,55 +1,41 @@
+"""Email the duplicate-subscriber spreadsheet to each recipient via Gmail SMTP."""
+
+import os
 import smtplib
 from datetime import date
-from email import encoders
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import os
+from email.message import EmailMessage
 
-def email_spreadsheet(spreadsheet, to_email):
+XLSX_MIME = ('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+def email_spreadsheet(spreadsheet, recipients):
+    """Send the spreadsheet to each recipient as a separate email over one SMTP session."""
     from_address = os.environ.get('FROM_ALERT_EMAIL')
     from_password = os.environ.get('FROM_ALERT_PWD')
 
-    # instance of MIMEMultipart
-    msg = MIMEMultipart()
-
-    msg['From'] = from_address
-    msg['To'] = to_email
-
-    date_ = date.today()
-    msg['Subject'] = f"Duplicate Drip Subscribers report for {date_.month}/{date_.day}"    
-    body = "Here's the report on duplicate subscribers in Drip that correspond to the same email address."
-
-    # attach the body with the msg instance
-    msg.attach(MIMEText(body, 'plain'))
-
+    attachment_data = None
     if spreadsheet:
-        # open the file to be sent 
-        attachment = open(spreadsheet, "rb")
+        with open(spreadsheet, 'rb') as file:
+            attachment_data = file.read()
 
-        # instance of MIMEBase and named as p
-        p = MIMEBase('application', 'octet-stream')
+    today = date.today()
 
-        # To change the payload into encoded form
-        p.set_payload((attachment).read())
+    with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+        smtp.starttls()
+        smtp.login(from_address, from_password)
 
-        # encode into base64
-        encoders.encode_base64(p)
-        p.add_header('Content-Disposition', "attachment; filename= %s" % spreadsheet)
+        for to_email in recipients:
+            msg = EmailMessage()
+            msg['From'] = from_address
+            msg['To'] = to_email
+            msg['Subject'] = f'Duplicate Drip Subscribers report for {today.month}/{today.day}'
+            msg.set_content("Here's the report on duplicate subscribers in Drip "
+                            'that correspond to the same email address.')
 
-        # attach the instance 'p' to instance 'msg'
-        msg.attach(p)
+            if attachment_data:
+                maintype, subtype = XLSX_MIME
+                msg.add_attachment(attachment_data, maintype=maintype, subtype=subtype,
+                                   filename=os.path.basename(spreadsheet))
 
-    # creates SMTP session and start ttls
-    s = smtplib.SMTP('smtp.gmail.com', 587)
-    s.starttls()
-
-    s.login(from_address, from_password) # Authentication
-
-    text = msg.as_string() # Converts the Multipart msg into a string
-
-    # send the mail and terminate
-    s.sendmail(from_address, to_email, text)
-    s.quit()
-
-    print('email sent')
+            smtp.send_message(msg)
+            print(f'Email sent to {to_email}')

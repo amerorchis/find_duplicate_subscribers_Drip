@@ -1,7 +1,7 @@
 [project]
 name = "email-dupes"
 version = "0.1.0"
-description = "Add your description here"
+description = "Find duplicate subscribers in a Drip account and email a report"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -9,3 +9,12 @@ dependencies = [
     "pandas>=3.0.2",
     "requests>=2.33.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
