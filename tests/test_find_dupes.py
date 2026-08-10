@@ -69,3 +69,21 @@ class TestFindDuplicates:
         emails = ['z@example.com', 'z+1@example.com', 'a@example.com', 'a+1@example.com']
         result = find_duplicates(emails)
         assert [normalized for normalized, _ in result] == ['a@example.com', 'z@example.com']
+
+
+class TestSaveExcel:
+    """Spreadsheet output round-trip."""
+
+    def test_writes_header_and_groups(self, tmp_path):
+        from openpyxl import load_workbook
+
+        from save_excel import save_excel
+
+        out = tmp_path / 'report.xlsx'
+        save_excel([('john@gmail.com', ['j.ohn@gmail.com', 'john+x@gmail.com'])], out)
+
+        rows = list(load_workbook(out).active.iter_rows(values_only=True))
+        assert rows == [
+            ('Normalized Email', 'Duplicate Subscribers'),
+            ('john@gmail.com', 'j.ohn@gmail.com, john+x@gmail.com'),
+        ]
