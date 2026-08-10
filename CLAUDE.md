@@ -21,6 +21,8 @@ uv run main.py
 - `FROM_ALERT_PWD` — Gmail app password for SMTP
 - `RECIPS` — Comma-separated recipient emails (e.g. `'alice@example.com, bob@example.com'`)
 
+Optional: set `DRY_RUN=1` to run the full pipeline (fetch + spreadsheet) but skip the email send. Always use this when testing — a normal run emails real recipients.
+
 ## Architecture
 
 Pipeline flow (`main.py`):

@@ -28,7 +28,12 @@ def main():
     os.makedirs('files', exist_ok=True)
     spreadsheet_name = f'files/duplicate_emails_{datetime.now().strftime("%-m_%-d_%y")}.xlsx'
     save_excel(results, spreadsheet_name)
-    email_spreadsheet(spreadsheet_name, recipients)
+
+    if os.environ.get('DRY_RUN'):
+        print(f'DRY_RUN set: skipping email send. '
+              f'Would have sent {spreadsheet_name} to {", ".join(recipients)}')
+    else:
+        email_spreadsheet(spreadsheet_name, recipients)
 
 
 if __name__ == '__main__':
