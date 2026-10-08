@@ -41,7 +41,7 @@ def run():
     logger.info('Found %d duplicate group(s)', len(results))
 
     os.makedirs('files', exist_ok=True)
-    spreadsheet_name = f'files/duplicate_emails_{datetime.now().strftime("%-m_%-d_%y")}.xlsx'
+    spreadsheet_name = f'files/duplicate_emails_{datetime.now().astimezone().strftime("%-m_%-d_%y")}.xlsx'
     save_excel(results, spreadsheet_name)
 
     if os.environ.get('DRY_RUN'):

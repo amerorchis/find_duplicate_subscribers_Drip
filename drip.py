@@ -91,8 +91,7 @@ class DripEmailUtil:
     def write_to_file(self, filename):
         """Write the fetched emails to a file, one per line (dev helper)."""
         with open(filename, 'w', encoding='utf-8') as file:
-            for email in self.emails:
-                file.write(email + '\n')
+            file.writelines(email + '\n' for email in self.emails)
         logger.info('Emails written to %s', filename)
 
     def read_emails_from_file(self, filename):
