@@ -1,12 +1,17 @@
 """Normalize email addresses and find subscribers that share the same real inbox."""
 
+import logging
 import re
 from collections import defaultdict
+
+from log_utils import mask_email
 
 # Only Gmail treats dots in the local part as insignificant.
 DOT_INSENSITIVE_DOMAINS = {'gmail.com', 'googlemail.com'}
 
 EMAIL_PATTERN = re.compile(r'^([^@]+)@([^@]+)$')
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_email(email):
@@ -31,13 +36,13 @@ def find_duplicates(emails):
     for email in emails:
         normalized = normalize_email(email)
         if normalized is None:
-            print(f'Skipping unparseable email: {email!r}')
+            logger.warning('Skipping unparseable email: %r', mask_email(email))
             skipped += 1
             continue
         groups[normalized].append(email)
 
     if skipped:
-        print(f'Skipped {skipped} unparseable email(s)')
+        logger.info('Skipped %d unparseable email(s)', skipped)
 
     return [(normalized, variants) for normalized, variants in sorted(groups.items())
             if len(variants) > 1]

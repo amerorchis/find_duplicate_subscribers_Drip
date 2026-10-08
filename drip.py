@@ -1,5 +1,6 @@
 """Fetch all subscriber emails from the Drip API with bounded concurrency."""
 
+import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -9,6 +10,8 @@ import requests
 MAX_WORKERS = 10
 REQUEST_TIMEOUT = 30
 PER_PAGE = 1000
+
+logger = logging.getLogger(__name__)
 
 
 class DripEmailUtil:
@@ -45,8 +48,8 @@ class DripEmailUtil:
         if self.errors:
             raise RuntimeError(f'Failed to fetch {len(self.errors)} page(s): {self.errors}')
 
-        print(f'{len(self.emails)} emails were added to the list '
-              f'out of a total of {self.total_emails}')
+        logger.info('%d emails were added to the list out of a total of %d',
+                    len(self.emails), self.total_emails)
 
     def get_page_emails(self, page_number, retries=3):
         """Fetch one page of subscriber emails, retrying with backoff on failure."""
@@ -58,14 +61,15 @@ class DripEmailUtil:
                 data = response.json()
 
                 if page_number % 10 == 0:
-                    print(f'Added page {page_number}')
+                    logger.info('Added page %d', page_number)
                 return [subscriber['email'] for subscriber in data['subscribers']]
 
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException:
                 if attempt < retries - 1:
                     time.sleep(2 ** attempt)
                 else:
-                    print(f'Failed to fetch page {page_number} after {retries} attempts: {e}')
+                    logger.exception('Failed to fetch page %d after %d attempts',
+                                     page_number, retries)
                     self.errors.append(page_number)
         return []
 
@@ -82,14 +86,14 @@ class DripEmailUtil:
         self.total_emails = data['meta']['total_count']
         self.emails = [subscriber['email'] for subscriber in data['subscribers']]
 
-        print('Added page 1')
+        logger.info('Added page 1')
 
     def write_to_file(self, filename):
         """Write the fetched emails to a file, one per line (dev helper)."""
         with open(filename, 'w', encoding='utf-8') as file:
             for email in self.emails:
                 file.write(email + '\n')
-        print(f'Emails written to {filename}')
+        logger.info('Emails written to %s', filename)
 
     def read_emails_from_file(self, filename):
         """Load emails from a file instead of the API (dev helper)."""

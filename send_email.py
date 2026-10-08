@@ -1,11 +1,16 @@
 """Email the duplicate-subscriber spreadsheet to each recipient via Gmail SMTP."""
 
+import logging
 import os
 import smtplib
 from datetime import date
 from email.message import EmailMessage
 
+from log_utils import mask_email
+
 XLSX_MIME = ('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+logger = logging.getLogger(__name__)
 
 
 def email_spreadsheet(spreadsheet, recipients):
@@ -38,4 +43,4 @@ def email_spreadsheet(spreadsheet, recipients):
                                    filename=os.path.basename(spreadsheet))
 
             smtp.send_message(msg)
-            print(f'Email sent to {to_email}')
+            logger.info('Email sent to %s', mask_email(to_email))
