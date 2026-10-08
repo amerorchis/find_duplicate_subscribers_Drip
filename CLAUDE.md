@@ -31,7 +31,7 @@ Pipeline flow (`main.py`):
 3. **save_excel.py** — Writes one row per duplicate group to an Excel file via openpyxl
 4. **send_email.py** — Emails the spreadsheet to each recipient over a single Gmail SMTP session
 
-`main.py` validates all required environment variables up front and creates `files/` if missing. Output spreadsheets are saved to `files/` with date-stamped names.
+`main.py` configures logging once at startup (`log_utils.configure_logging()`: `%(asctime)s - %(levelname)s - %(message)s` to stderr, which cron appends to `cron.log`), validates all required environment variables up front, and creates `files/` if missing. Any failure is logged at ERROR (with a traceback via `logger.exception`) and exits 1. Modules log via `logging.getLogger(__name__)`, not `print()`. This repo is public: never log full email addresses — log counts or `log_utils.mask_email()`. Output spreadsheets are saved to `files/` with date-stamped names.
 
 ## Testing
 
