@@ -7,9 +7,9 @@ from collections import defaultdict
 from log_utils import mask_email
 
 # Only Gmail treats dots in the local part as insignificant.
-DOT_INSENSITIVE_DOMAINS = {'gmail.com', 'googlemail.com'}
+DOT_INSENSITIVE_DOMAINS = {"gmail.com", "googlemail.com"}
 
-EMAIL_PATTERN = re.compile(r'^([^@]+)@([^@]+)$')
+EMAIL_PATTERN = re.compile(r"^([^@]+)@([^@]+)$")
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +21,12 @@ def normalize_email(email):
         return None
     username, domain = match.groups()
 
-    username = username.split('+', 1)[0]
+    username = username.split("+", 1)[0]
 
     if domain in DOT_INSENSITIVE_DOMAINS:
-        username = username.replace('.', '')
+        username = username.replace(".", "")
 
-    return f'{username}@{domain}'
+    return f"{username}@{domain}"
 
 
 def find_duplicates(emails):
@@ -36,13 +36,16 @@ def find_duplicates(emails):
     for email in emails:
         normalized = normalize_email(email)
         if normalized is None:
-            logger.warning('Skipping unparseable email: %r', mask_email(email))
+            logger.warning("Skipping unparseable email: %r", mask_email(email))
             skipped += 1
             continue
         groups[normalized].append(email)
 
     if skipped:
-        logger.info('Skipped %d unparseable email(s)', skipped)
+        logger.info("Skipped %d unparseable email(s)", skipped)
 
-    return [(normalized, variants) for normalized, variants in sorted(groups.items())
-            if len(variants) > 1]
+    return [
+        (normalized, variants)
+        for normalized, variants in sorted(groups.items())
+        if len(variants) > 1
+    ]

@@ -29,11 +29,12 @@ jobs:
         run: uv python install 3.12
 
       # Pinned so a new ruff release can't turn CI red on its own. Default
-      # rules; there is no ruff config in this repo. No `ruff format --check`
-      # yet: `ruff format` would rewrite 8 of the 10 files (mostly quote
-      # style), which belongs in its own change.
+      # rules; there is no ruff config in this repo.
       - name: Lint
         run: uvx ruff@0.16.10 check .
+
+      - name: Check formatting
+        run: uvx ruff@0.16.10 format --check .
 
       # --locked fails the run if uv.lock has drifted from pyproject.toml. The
       # tests need no credentials or network: they only exercise the pure
