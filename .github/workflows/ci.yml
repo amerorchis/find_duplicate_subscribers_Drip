@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    env:
+      # Production runs 3.12 (.python-version). Pin it here too so CI is told
+      # explicitly rather than inheriting whatever the runner image ships.
+      UV_PYTHON: "3.12"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+        with:
+          version: "0.12.23"
+          enable-cache: true
+
+      - name: Install Python 3.12
+        run: uv python install 3.12
+
+      # Pinned so a new ruff release can't turn CI red on its own. Default
+      # rules; there is no ruff config in this repo. No `ruff format --check`
+      # yet: `ruff format` would rewrite 8 of the 10 files (mostly quote
+      # style), which belongs in its own change.
+      - name: Lint
+        run: uvx ruff@0.16.10 check .
+
+      # --locked fails the run if uv.lock has drifted from pyproject.toml. The
+      # tests need no credentials or network: they only exercise the pure
+      # normalisation and masking code.
+      - name: Test
+        run: uv run --locked pytest
+
+  deploy:
+    name: Deploy to gnpic
+    needs: test
+    # The only path to the Pi, and the reason a fork PR cannot reach it: pull
+    # request events fail this check, and only collaborators can dispatch or
+    # push to main. `needs: test` means a red suite never deploys.
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, gnpic]
+    # deploy.sh waits for a live Monday-morning run to finish (minutes
+    # normally; it gives up at one hour).
+    timeout-minutes: 75
+    concurrency:
+      # One deploy at a time; queue rather than cancel, so an interrupted run
+      # can't leave the checkout half-updated.
+      group: deploy-gnpic
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Deploy
+        run: ./scripts/deploy.sh

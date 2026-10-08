@@ -3,7 +3,7 @@
 import logging
 import os
 import smtplib
-from datetime import date
+from datetime import datetime
 from email.message import EmailMessage
 
 from log_utils import mask_email
@@ -23,7 +23,7 @@ def email_spreadsheet(spreadsheet, recipients):
         with open(spreadsheet, 'rb') as file:
             attachment_data = file.read()
 
-    today = date.today()
+    today = datetime.now().astimezone()
 
     with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
         smtp.starttls()
